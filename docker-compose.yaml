@@ -1,9 +1,5 @@
 version: '3'
 
-networks:
-  backend:
-    driver: bridge
-
 services:
   zookeeper:
     image: bitnami/zookeeper:latest
@@ -11,12 +7,8 @@ services:
       - zookeeper_data:/bitnami/zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    networks:
-      - backend
   kafka:
     image: bitnami/kafka:latest
-    ports:
-      - "9092:9092"
     volumes:
       - kafka_data:/bitnami/kafka
     environment:
@@ -26,11 +18,24 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka:9093,CLIENT://localhost:9092
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
       - ALLOW_PLAINTEXT_LISTENER=yes
-    networks:
-      - backend
     # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
     depends_on:
       - zookeeper
+  backend:
+    build:
+      context: ./backend
+    restart: always
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+  proxy:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: always
 volumes:
   kafka_data:
   zookeeper_data:

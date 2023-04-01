@@ -7,8 +7,11 @@ services:
       - zookeeper_data:/bitnami/zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+    restart: always
   kafka:
     image: bitnami/kafka:latest
+    ports:
+      - "9092:9092"
     volumes:
       - kafka_data:/bitnami/kafka
     environment:
@@ -21,6 +24,7 @@ services:
     # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
     depends_on:
       - zookeeper
+    restart: always
   backend:
     build:
       context: ./backend

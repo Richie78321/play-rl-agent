@@ -23,9 +23,13 @@ services:
     # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
     depends_on:
       - zookeeper
-  backend:
+  agent-api:
     build:
-      context: ./backend
+      context: ./agent-api
+    restart: always
+  playdata-api:
+    build:
+      context: ./playdata-api
     restart: always
   frontend:
     build:

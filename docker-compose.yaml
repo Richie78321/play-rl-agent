@@ -24,6 +24,15 @@ services:
     # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
     depends_on:
       - zookeeper
+  logstash:
+    image: logstash:8.6.2
+    restart: always
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    environment:
+      - XPACK_MONITORING_ENABLED=false
+    depends_on:
+      - kafka
   agent-api:
     build:
       context: ./agent-api

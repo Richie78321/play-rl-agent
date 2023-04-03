@@ -20,6 +20,7 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka:9093,CLIENT://localhost:9092
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
     # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
     depends_on:
       - zookeeper

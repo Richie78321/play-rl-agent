@@ -1,0 +1,3 @@
+CREATE TABLE IF NOT EXISTS playdata (
+    id SERIAL PRIMARY KEY
+)

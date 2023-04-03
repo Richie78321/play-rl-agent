@@ -10,6 +10,8 @@ services:
       - ALLOW_ANONYMOUS_LOGIN=yes
   kafka:
     image: bitnami/kafka:latest
+    ports:
+      - "9092:9092"
     restart: always
     volumes:
       - kafka_data:/bitnami/kafka
@@ -24,8 +26,29 @@ services:
     # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
     depends_on:
       - zookeeper
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=playdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres.sql:/docker-entrypoint-initdb.d/postgres.sql:ro
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@pgadmin.com
+      - PGADMIN_DEFAULT_PASSWORD=password
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
   logstash:
-    image: logstash:8.6.2
+    build:
+      dockerfile: ./Logstash.Dockerfile
     restart: always
     volumes:
       - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
@@ -55,3 +78,5 @@ services:
 volumes:
   kafka_data:
   zookeeper_data:
+  postgres_data:
+  pgadmin_data:

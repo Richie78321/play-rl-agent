@@ -83,6 +83,11 @@ services:
     build:
       context: ./playdata-api
     restart: always
+    environment:
+      - KAFKA_BOOTSTRAP_SERVER=kafka1:9092
+    depends_on:
+      - kafka1
+      - kafka2
   frontend:
     build:
       context: ./frontend

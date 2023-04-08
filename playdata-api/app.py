@@ -1,7 +1,10 @@
+import os
+
 from flask import Flask, jsonify, request
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
 from werkzeug.middleware.proxy_fix import ProxyFix
+from kafka import KafkaProducer
 
 app = Flask(__name__)
 
@@ -21,6 +24,10 @@ playdata_validator = Draft7Validator(schema={
     "required": ["initial_state", "action", "resultant_state", "reward"],
     "additional_properties": False,
 })
+
+if os.environ.get("KAFKA_BOOTSTRAP_SERVER") is None:
+    raise EnvironmentError("Must define KAFKA_BOOTSTRAP_SERVER")
+kafka_producer = KafkaProducer(bootstrap_servers=os.environ.get("KAFKA_BOOTSTRAP_SERVER"))
 
 @app.post("/submit")
 def submit_playdata():

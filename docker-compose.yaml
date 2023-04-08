@@ -8,21 +8,39 @@ services:
       - zookeeper_data:/bitnami/zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-  kafka:
+  kafka1:
     image: bitnami/kafka:latest
-    ports:
-      - "9092:9092"
     restart: always
-    volumes:
-      - kafka_data:/bitnami/kafka
+    ports:
+      - "29092:29092"
     environment:
+      - KAFKA_CFG_BROKER_ID=1
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,CLIENT:PLAINTEXT
-      - KAFKA_CFG_LISTENERS=INTERNAL://:9093,CLIENT://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka:9093,CLIENT://localhost:9092
-      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:29092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+    volumes:
+      - "kafka1_data:/bitnami/kafka"
+    # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
+    depends_on:
+      - zookeeper
+  kafka2:
+    image: bitnami/kafka:latest
+    restart: always
+    ports:
+      - "39092:39092"
+    environment:
+      - KAFKA_CFG_BROKER_ID=2
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:39092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka2:9092,PLAINTEXT_HOST://localhost:39092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - "kafka2_data:/bitnami/kafka"
     # This ensures that Kafka can properly unregister itself from ZooKeeper before ZooKeeper stops.
     depends_on:
       - zookeeper
@@ -55,7 +73,8 @@ services:
     environment:
       - XPACK_MONITORING_ENABLED=false
     depends_on:
-      - kafka
+      - kafka1
+      - kafka2
   agent-api:
     build:
       context: ./agent-api
@@ -76,7 +95,8 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
 volumes:
-  kafka_data:
+  kafka1_data:
+  kafka2_data:
   zookeeper_data:
   postgres_data:
   pgadmin_data:

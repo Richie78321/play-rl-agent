@@ -6,6 +6,8 @@ from jsonschema.exceptions import ValidationError
 from werkzeug.middleware.proxy_fix import ProxyFix
 from kafka import KafkaProducer
 
+KAFKA_PLAYDATA_TOPIC = "playdata"
+
 app = Flask(__name__)
 
 # Configuration required to use Flask behind a proxy.
@@ -31,6 +33,8 @@ kafka_producer = KafkaProducer(bootstrap_servers=os.environ.get("KAFKA_BOOTSTRAP
 
 @app.post("/submit")
 def submit_playdata():
+    # Validate that the JSON playdata matches the required schema before
+    # sending it over Kafka.
     playdata = request.get_json()
     try:
         playdata_validator.validate(playdata)
@@ -38,6 +42,8 @@ def submit_playdata():
         return jsonify({
             "message": str(e)
         }), 400
+    
+    kafka_producer.send(topic=KAFKA_PLAYDATA_TOPIC, value=request.get_data())
 
     return jsonify({
         "message": "success"

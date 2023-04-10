@@ -10,6 +10,11 @@ POSITION_TO_VALUE = {
     "X": 1,
     "O": 2,
 }
+SYMBOL_SWAP = {
+    0: 0,
+    1: 2,
+    2: 1,
+}
 
 # All of the possible transformations that yield a board with an equivalent state.
 # For example, rotating the board by 90 degrees does not change the state of the game.
@@ -37,8 +42,11 @@ class Board:
     board: np.ndarray
 
     @classmethod
-    def from_np_text_board(cls, text_board: np.ndarray):
-        return cls(np.vectorize(POSITION_TO_VALUE.get)(text_board).astype(np.int8))
+    def from_np_text_board(cls, text_board: np.ndarray, agent_is_x: bool = True):
+        return cls(
+            np.vectorize(POSITION_TO_VALUE.get)(text_board).astype(np.int8),
+            agent_is_x=agent_is_x,
+        )
 
     @classmethod
     def from_board_code(cls, board_code: int):
@@ -61,9 +69,14 @@ class Board:
     def np_board_to_code(board: np.ndarray) -> int:
         return int("".join(map(str, board.flatten())))
 
-    def __init__(self, np_board: np.ndarray):
+    def __init__(self, np_board: np.ndarray, agent_is_x: bool = False):
         if not Board.is_valid_np_board(np_board):
             raise ValueError("invalid board")
+
+        if not agent_is_x:
+            # Board states are always represented with the agent as X.
+            # If the agent is O, then swap the symbols.
+            np_board = np.vectorize(SYMBOL_SWAP.get)(np_board)
 
         self.board = np_board
 

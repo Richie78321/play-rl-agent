@@ -39,10 +39,13 @@ BOARD_SYMMETRY_TRANSFORMS = [
 
 
 class Board:
-    board: np.ndarray
+    _board: np.ndarray
 
     @classmethod
     def from_np_text_board(cls, text_board: np.ndarray, agent_is_x: bool = True):
+        if text_board.shape == (9,):
+            text_board = text_board.reshape((3, 3))
+
         return cls(
             np.vectorize(POSITION_TO_VALUE.get)(text_board).astype(np.int8),
             agent_is_x=agent_is_x,
@@ -71,23 +74,23 @@ class Board:
 
     def __init__(self, np_board: np.ndarray, agent_is_x: bool = False):
         if not Board.is_valid_np_board(np_board):
-            raise ValueError("invalid board")
+            raise ValueError(f"invalid board")
 
         if not agent_is_x:
             # Board states are always represented with the agent as X.
             # If the agent is O, then swap the symbols.
             np_board = np.vectorize(SYMBOL_SWAP.get)(np_board)
 
-        self.board = np_board
+        self._board = np_board
 
     def __str__(self):
         return "\n".join(
-            [" ".join(map(VALUE_TO_POSITION.get, row)) for row in self.board]
+            [" ".join(map(VALUE_TO_POSITION.get, row)) for row in self._board]
         )
 
     @property
     def code(self):
-        return Board.np_board_to_code(self.board)
+        return Board.np_board_to_code(self._board)
 
     @property
     def normalization_transform(self):
@@ -95,7 +98,7 @@ class Board:
         all symmetrical boards are the same.
         """
         all_transforms = [
-            (transform, Board.np_board_to_code(transform(self.board)))
+            (transform, Board.np_board_to_code(transform(self._board)))
             for transform in BOARD_SYMMETRY_TRANSFORMS
         ]
 
@@ -104,3 +107,6 @@ class Board:
         # to the same equivalent board state.
         min_transform, _ = min(all_transforms, key=lambda x: x[1])
         return min_transform
+
+    def transform(self, transform) -> "Board":
+        return Board(np_board=transform(self._board))

@@ -1,0 +1,92 @@
+import numpy as np
+
+VALUE_TO_POSITION = {
+    0: "-",
+    1: "X",
+    2: "O",
+}
+POSITION_TO_VALUE = {
+    "-": 0,
+    "X": 1,
+    "O": 2,
+}
+
+# All of the possible transformations that yield a board with an equivalent state.
+# For example, rotating the board by 90 degrees does not change the state of the game.
+BOARD_SYMMETRY_TRANSFORMS = [
+    # Identity
+    lambda x: x,
+    # Rotation by 90 degrees
+    lambda x: np.rot90(x),
+    # Rotation by 180 degrees
+    lambda x: np.rot90(x, 2),
+    # Rotation by 270 degrees
+    lambda x: np.rot90(x, 3),
+    # Horizontal reflection
+    lambda x: np.flipud(x),
+    # Vertical reflection
+    lambda x: np.fliplr(x),
+    # Diagonal reflection
+    lambda x: np.transpose(x),
+    # Anti-diagonal reflection
+    lambda x: np.rot90(np.flipud(x)),
+]
+
+
+class Board:
+    board: np.ndarray
+
+    @classmethod
+    def from_np_text_board(cls, text_board: np.ndarray):
+        return cls(np.vectorize(POSITION_TO_VALUE.get)(text_board).astype(np.int8))
+
+    @classmethod
+    def from_board_code(cls, board_code: int):
+        # TODO(richie): Implement
+        raise NotImplementedError()
+
+    @staticmethod
+    def is_valid_np_board(board: np.ndarray) -> bool:
+        if board.dtype != np.int8:
+            return False
+        if board.shape != (3, 3):
+            return False
+        if board.min() < 0 or board.max() > 2:
+            return False
+
+        return True
+
+    @staticmethod
+    def np_board_to_code(board: np.ndarray) -> int:
+        return int("".join(map(str, board.flatten())))
+
+    def __init__(self, board: np.ndarray):
+        if not Board.is_valid_np_board(board):
+            raise ValueError("invalid board")
+
+        self.board = board
+
+    def __str__(self):
+        return "\n".join(
+            [" ".join(map(VALUE_TO_POSITION.get, row)) for row in self.board]
+        )
+
+    @property
+    def code(self):
+        return Board.np_board_to_code(self.board)
+
+    @property
+    def normalization_transform(self):
+        """Return the transform function that will normalize the board such that
+        all symmetrical boards are the same.
+        """
+        all_transforms = [
+            (transform, Board.np_board_to_code(transform(self.board)))
+            for transform in BOARD_SYMMETRY_TRANSFORMS
+        ]
+
+        # Pick the transform that yields the minimum board code. Since all board
+        # codes are unique, this ensures that all symmetrical boards are transformed
+        # to the same equivalent board state.
+        min_transform, _ = min(all_transforms, key=lambda x: x[1])
+        return min_transform

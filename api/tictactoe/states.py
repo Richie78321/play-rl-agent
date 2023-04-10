@@ -1,3 +1,5 @@
+from typing import List, Union
+
 import numpy as np
 
 VALUE_TO_POSITION = {
@@ -42,24 +44,29 @@ class Board:
     _board: np.ndarray
 
     @classmethod
-    def from_np_text_board(cls, text_board: np.ndarray, agent_is_x: bool = True):
+    def from_text_board(
+        cls, text_board: Union[np.ndarray, List[str]], agent_is_x: bool = True
+    ):
+        if type(text_board) == list:
+            text_board = np.array(text_board)
+
         if text_board.shape == (9,):
             text_board = text_board.reshape((3, 3))
 
         return cls(
-            np.vectorize(POSITION_TO_VALUE.get)(text_board).astype(np.int8),
+            np.vectorize(POSITION_TO_VALUE.get)(text_board),
             agent_is_x=agent_is_x,
         )
 
     @classmethod
     def from_board_code(cls, board_code: int):
         cell_values = list(str(board_code).zfill(9))
-        np_board = np.array(cell_values).astype(np.int8).reshape((3, 3))
+        np_board = np.array(cell_values).reshape((3, 3))
         return Board(np_board=np_board)
 
     @staticmethod
     def is_valid_np_board(board: np.ndarray) -> bool:
-        if board.dtype != np.int8:
+        if board.dtype != np.int64:
             return False
         if board.shape != (3, 3):
             return False

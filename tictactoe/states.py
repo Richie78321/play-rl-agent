@@ -42,8 +42,9 @@ class Board:
 
     @classmethod
     def from_board_code(cls, board_code: int):
-        # TODO(richie): Implement
-        raise NotImplementedError()
+        cell_values = list(str(board_code).zfill(9))
+        np_board = np.array(cell_values).astype(np.int8).reshape((3, 3))
+        return Board(np_board=np_board)
 
     @staticmethod
     def is_valid_np_board(board: np.ndarray) -> bool:
@@ -60,11 +61,11 @@ class Board:
     def np_board_to_code(board: np.ndarray) -> int:
         return int("".join(map(str, board.flatten())))
 
-    def __init__(self, board: np.ndarray):
-        if not Board.is_valid_np_board(board):
+    def __init__(self, np_board: np.ndarray):
+        if not Board.is_valid_np_board(np_board):
             raise ValueError("invalid board")
 
-        self.board = board
+        self.board = np_board
 
     def __str__(self):
         return "\n".join(

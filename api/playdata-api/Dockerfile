@@ -3,10 +3,13 @@ FROM python:3.11-slim-buster AS base
 FROM base AS deps
 WORKDIR /app
 COPY ./requirements.txt /app
+COPY ../tictactoe /tictactoe
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
     /opt/venv/bin/pip install --no-cache-dir -r requirements.txt && \
-    /opt/venv/bin/pip install --no-cache-dir gunicorn
+    /opt/venv/bin/pip install --no-cache-dir gunicorn && \
+    curl -sSL https://install.python-poetry.org | python - && \
+    poetry 
 
 FROM base AS runner
 WORKDIR /app

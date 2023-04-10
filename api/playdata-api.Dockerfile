@@ -18,4 +18,4 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 EXPOSE 80
 
-CMD ["gunicorn", "-b", "0.0.0.0:80", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:80", "--chdir", "playdata-api", "app:app"]

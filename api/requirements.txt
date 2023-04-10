@@ -6,5 +6,6 @@ Jinja2==3.1.2
 jsonschema==4.17.3
 kafka-python==2.0.2
 MarkupSafe==2.1.2
+numpy==1.24.2
 pyrsistent==0.19.3
 Werkzeug==2.2.3

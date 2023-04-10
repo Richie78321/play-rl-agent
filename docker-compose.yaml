@@ -77,11 +77,13 @@ services:
       - kafka2
   agent-api:
     build:
-      context: ./agent-api
+      context: ./api
+      dockerfile: ./agent-api.Dockerfile
     restart: always
   playdata-api:
     build:
-      context: ./playdata-api
+      context: ./api
+      dockerfile: ./playdata-api.Dockerfile
     restart: always
     environment:
       - KAFKA_BOOTSTRAP_SERVER=kafka1:9092

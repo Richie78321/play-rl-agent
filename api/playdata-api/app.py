@@ -1,5 +1,7 @@
 import os
 
+from tictactoe.states import Board
+
 from flask import Flask, jsonify, request
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError

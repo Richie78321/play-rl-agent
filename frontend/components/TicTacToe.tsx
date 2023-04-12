@@ -1,10 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 
 enum CellState {
     Empty = "-",
     X = "X",
     O = "O",
 }
+const STRING_TO_CELL_STATE: {[key: string]: CellState} = {
+    "-": CellState.Empty,
+    "X": CellState.X,
+    "O": CellState.O,
+};
+
 interface SquareProps {
     state: CellState;
     callback: React.MouseEventHandler<HTMLButtonElement>;
@@ -17,13 +23,44 @@ const Square: React.FC<SquareProps> = ({state, callback}) => {
     }}>{state}</button>
 }
 
+async function getAgentAction(boardState: Array<CellState>) {
+    const resp = await fetch(new URL("/action", process.env.NEXT_PUBLIC_AGENT_API).toString(), {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            state: boardState,
+            agent_is_x: false,
+        }),
+    });
+    const rawAction = (await resp.json())["action"] as Array<string>;
+    return rawAction.map((val) => STRING_TO_CELL_STATE[val]);
+}
+
 export default function TicTacToe() {
-    // Test board
-    // X O -
-    // X - -
-    // - - -
-    const boardState: Array<CellState> = [CellState.X, CellState.O, CellState.Empty, CellState.X, CellState.Empty, CellState.Empty, CellState.Empty, CellState.Empty, CellState.Empty]
-    const boardSquares = boardState.map((state, index) => <Square state={state} callback={(e) => {}} />)
+    const [boardState, update] = useState<Array<CellState>>(new Array(9).fill(CellState.Empty));
+    const squareCallback = async (cellId: number) => {
+        if (boardState[cellId] != CellState.Empty) {
+            return;
+        }
+
+        const newBoardState = Array.from(boardState);
+        newBoardState[cellId] = CellState.X;
+
+        // TODO(richie): Improve this
+        const agentAction = await getAgentAction(newBoardState);
+        // Apply the agent's action
+        const actionIndex = agentAction.findIndex(val => val != CellState.Empty);
+        if (actionIndex == -1 || newBoardState[actionIndex] != CellState.Empty) {
+            throw new Error("invalid action from agent")
+        }
+        newBoardState[actionIndex] = CellState.O;
+
+        update(newBoardState);
+    }
+
+    const boardSquares = boardState.map((state, index) => <Square key={index} state={state} callback={(e) => squareCallback(index)} />)
     return (
         <table>
             <tbody>

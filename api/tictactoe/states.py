@@ -79,7 +79,7 @@ class Board:
     def np_board_to_code(board: np.ndarray) -> int:
         return int("".join(map(str, board.flatten())))
 
-    def __init__(self, np_board: np.ndarray, agent_is_x: bool = False):
+    def __init__(self, np_board: np.ndarray, agent_is_x: bool = True):
         if not Board.is_valid_np_board(np_board):
             raise ValueError(f"invalid board")
 
@@ -91,9 +91,11 @@ class Board:
         self._board = np_board
 
     def __str__(self):
-        return "\n".join(
-            [" ".join(map(VALUE_TO_POSITION.get, row)) for row in self._board]
-        )
+        return "\n".join([" ".join(row) for row in self.text_board])
+
+    @property
+    def text_board(self):
+        return np.vectorize(VALUE_TO_POSITION.get)(self._board)
 
     @property
     def code(self):

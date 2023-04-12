@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from states import Board
+from .states import Board
 
 
 class Agent(ABC):

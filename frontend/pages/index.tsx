@@ -1,8 +1,13 @@
 import Head from 'next/head'
-import { Inter } from 'next/font/google'
 import TicTacToe from '@/components/TicTacToe'
 
-const inter = Inter({ subsets: ['latin'] })
+const mainStyle = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  margin: "auto",
+  height: "100%",
+}
 
 export default function Home() {
   return (
@@ -16,7 +21,9 @@ export default function Home() {
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
       </Head>
-      <TicTacToe />
+      <main style={mainStyle}>
+        <TicTacToe />
+      </main>
     </>
   )
 }

@@ -5,9 +5,9 @@ from flask import Flask, jsonify, request
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
 from kafka import KafkaProducer
-from werkzeug.middleware.proxy_fix import ProxyFix
-
+from tictactoe.schema import state_schema
 from tictactoe.states import Board
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 KAFKA_PLAYDATA_TOPIC = "playdata"
 
@@ -16,15 +16,6 @@ app = Flask(__name__)
 # Configuration required to use Flask behind a proxy.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-state_schema = {
-    "type": "array",
-    "items": {
-        "enum": ["-", "X", "O"],
-    },
-    # Exactly 9 elements required: one for each cell in a Tic-Tac-Toe board.
-    "minItems": 9,
-    "maxItems": 9,
-}
 playdata_validator = Draft7Validator(
     schema={
         "type": "object",

@@ -5,8 +5,10 @@ from tictactoe.schema import state_schema
 from tictactoe.states import Board
 from tictactoe.agent import RandomAgent
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Configuration required to use Flask behind a proxy.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)

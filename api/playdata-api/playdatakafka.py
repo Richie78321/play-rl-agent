@@ -26,5 +26,5 @@ class Kafka:
 
         self._kafka_producer.send(
             topic=KAFKA_PLAYDATA_TOPIC,
-            value=payload,
+            value=payload.encode(),
         )

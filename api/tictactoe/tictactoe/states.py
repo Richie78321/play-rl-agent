@@ -1,4 +1,4 @@
-from typing import List, Union, Tuple, Callable
+from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
@@ -125,8 +125,13 @@ class Board:
         all symmetrical boards are the same.
         """
         all_transforms = [
-            ((transform, inverse_transform), Board.np_board_to_code(transform(self._board)))
-            for transform, inverse_transform in zip(BOARD_SYMMETRY_TRANSFORMS, BOARD_SYMMETRY_TRANSFORMS_INVERSE)
+            (
+                (transform, inverse_transform),
+                Board.np_board_to_code(transform(self._board)),
+            )
+            for transform, inverse_transform in zip(
+                BOARD_SYMMETRY_TRANSFORMS, BOARD_SYMMETRY_TRANSFORMS_INVERSE
+            )
         ]
 
         # Pick the transform that yields the minimum board code. Since all board

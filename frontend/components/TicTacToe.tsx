@@ -11,6 +11,15 @@ const STRING_TO_CELL_STATE: {[key: string]: CellState} = {
     "X": CellState.X,
     "O": CellState.O,
 };
+const WINNER_AGENT_REWARD: {[key: string]: number} = {
+    // Human is X, so this is a loss.
+    "X": -1,
+    // Agent is O, so this is a win.
+    "O": 1,
+    // Otherwise it is either a tie or not the end of the game, so 0.
+    "-": 0,
+};
+const GAME_RESTART_TIMEOUT_MS = 1000;
 
 type GameState = Array<CellState>;
 
@@ -42,6 +51,39 @@ async function getAgentAction(boardState: GameState): Promise<GameState> {
     return rawAction.map((val) => STRING_TO_CELL_STATE[val]);
 }
 
+function isTie(board: GameState): boolean {
+    return board.every((value) => value != CellState.Empty)
+}
+
+function isWinner(board: GameState): CellState {
+    for (const player of [CellState.X, CellState.O]) {
+        const winConditions = [
+            // Horizontal win conditions
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+
+            // Vertical win conditions
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+
+            // Diagonal win condition
+            [0, 4, 8],
+
+            // Anti-diagonal win condition
+            [2, 4, 6],
+        ];
+
+        for (const winCondition of winConditions) {
+            if (winCondition.every((index) => board[index] == player)) {
+                return player;
+            }
+        }
+    }
+
+    return CellState.Empty
+}
 
 interface TicTacToeProps {}
 interface TicTacToeState {
@@ -50,7 +92,7 @@ interface TicTacToeState {
 }
 interface AgentStep {
     initialState: GameState;
-    action: GameState;
+    action: GameState | null;
 }
 export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState> {
     lastAgentStep: AgentStep | null;
@@ -67,16 +109,13 @@ export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState>
         this.lastAgentStep = null;
     }
 
-    async sendAgentStep(state: GameState, action: GameState) {
-        // It is important that the GameState arrays are cloned -- otherwise downstream edits
-        // can affect these values.
-        
+    async sendAgentStep(humanBoardState: GameState, action: GameState | null, winner: CellState) {
         if (this.lastAgentStep != null) {
             const playdata = {
                 "initial_state": this.lastAgentStep.initialState,
                 "action": this.lastAgentStep.action,
-                "resultant_state": state,
-                "reward": 0,
+                "resultant_state": humanBoardState,
+                "reward": WINNER_AGENT_REWARD[winner],
                 "agent_is_x": false,
             };
             console.log("Sending playdata:")
@@ -93,10 +132,21 @@ export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState>
             }
         }
 
+        // It is important that the GameState arrays are cloned -- otherwise downstream edits
+        // can affect these values.
         this.lastAgentStep = {
-            initialState: Array.from(state),
-            action: Array.from(action),
+            initialState: Array.from(humanBoardState),
+            action: action == null ? null : Array.from(action),
         };
+    }
+
+    restartGame() {
+        this.lastAgentStep = null;
+        this.setState({
+            ...this.state,
+            boardState: new Array(9).fill(CellState.Empty),
+            loading: false,
+        })
     }
 
     render() {
@@ -112,24 +162,58 @@ export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState>
             if (this.state.boardState[cellId] != CellState.Empty) {
                 return;
             }
-    
-            const newBoardState = Array.from(this.state.boardState);
-            newBoardState[cellId] = CellState.X;
-    
-            const agentAction = await getAgentAction(newBoardState);
-            // Apply the agent's action
-            const actionIndex = agentAction.findIndex(val => val != CellState.Empty);
-            if (actionIndex == -1 || newBoardState[actionIndex] != CellState.Empty) {
-                throw new Error("invalid action from agent")
-            }
-            await this.sendAgentStep(newBoardState, agentAction);
-            newBoardState[actionIndex] = CellState.O;
 
-            this.setState({
-                ...this.state,
-                boardState: newBoardState,
-                loading: false,
-            });
+            // Apply the human's turn.
+            const humanBoardState = Array.from(this.state.boardState);
+            humanBoardState[cellId] = CellState.X;
+            // Determine if the human won or tied the game.
+            let winner = isWinner(humanBoardState);
+            let tie = isTie(humanBoardState);
+
+            // Only conduct the agent's turn if there is no winner and no tie
+            // after the human's turn.
+            let agentAction: GameState | null = null;
+            const agentBoardState = Array.from(humanBoardState);
+            if (winner == CellState.Empty && !tie) {
+                agentAction = await getAgentAction(humanBoardState);
+
+                // Apply the agent's turn.
+                const actionIndex = agentAction.findIndex(val => val != CellState.Empty);
+                if (actionIndex == -1 || humanBoardState[actionIndex] != CellState.Empty) {
+                    throw new Error("invalid action from agent")
+                }
+                agentBoardState[actionIndex] = CellState.O;
+
+                // Determine if the agent won or tied the game.
+                winner = isWinner(agentBoardState);
+                tie = isTie(agentBoardState);
+            }
+
+            // We update with the humanBoardState and not the agentBoardState.
+            // Otherwise we are double-counting the agentAction in the state and the action.
+            await this.sendAgentStep(humanBoardState, agentAction, winner);
+
+            // Update the game state.
+            if (winner != CellState.Empty || tie) {
+                // The game is over.
+                this.setState({
+                    ...this.state,
+                    boardState: agentBoardState,
+                    loading: true,
+                })
+
+                // Wait for some time and then restart the game
+                await new Promise((resolve) => setTimeout(resolve, GAME_RESTART_TIMEOUT_MS))
+                
+                this.restartGame();
+            } else {
+                // The game is ongoing.
+                this.setState({
+                    ...this.state,
+                    boardState: agentBoardState,
+                    loading: false,
+                });
+            }
             await this.gameMutex.release()
         }
     

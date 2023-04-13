@@ -3,6 +3,7 @@ FROM python:3.11-slim-buster AS base
 FROM base AS deps
 WORKDIR /app
 COPY ./requirements.txt /app
+COPY ./tictactoe/ /app/tictactoe/
 RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir --upgrade pip && \
     /opt/venv/bin/pip install --no-cache-dir -r requirements.txt && \

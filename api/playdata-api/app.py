@@ -38,7 +38,7 @@ def process_playdata_json(playdata_json):
     action = Board.from_text_board(
         playdata_json["action"], agent_is_x=playdata_json["agent_is_x"]
     )
-    normalization_transform = initial_state.normalization_transform
+    normalization_transform, _ = initial_state.normalization_transform
     # Normalize the initial state, and apply the same transform to the action
     # so it does not lose its meaning.
     initial_state = initial_state.transform(normalization_transform)
@@ -47,7 +47,8 @@ def process_playdata_json(playdata_json):
     resultant_state = Board.from_text_board(
         playdata_json["resultant_state"], agent_is_x=playdata_json["agent_is_x"]
     )
-    resultant_state = resultant_state.transform(resultant_state.normalization_transform)
+    normalization_transform, _ = resultant_state.normalization_transform
+    resultant_state = resultant_state.transform(normalization_transform)
 
     return {
         "initial_state": initial_state.code,

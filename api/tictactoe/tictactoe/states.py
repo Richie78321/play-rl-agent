@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Tuple, Callable
 
 import numpy as np
 
@@ -37,6 +37,24 @@ BOARD_SYMMETRY_TRANSFORMS = [
     lambda x: np.transpose(x),
     # Anti-diagonal reflection
     lambda x: np.rot90(np.flipud(x)),
+]
+BOARD_SYMMETRY_TRANSFORMS_INVERSE = [
+    # Inverse of Identity
+    lambda x: x,
+    # Inverse of Rotation by 90 degrees
+    lambda x: np.rot90(x, -1),
+    # Inverse of Rotation by 180 degrees
+    lambda x: np.rot90(x, 2),
+    # Inverse of Rotation by 270 degrees
+    lambda x: np.rot90(x, 1),
+    # Inverse of Horizontal reflection
+    lambda x: np.flipud(x),
+    # Inverse of Vertical reflection
+    lambda x: np.fliplr(x),
+    # Inverse of Diagonal reflection
+    lambda x: np.transpose(x),
+    # Inverse of Anti-diagonal reflection
+    lambda x: np.flipud(np.rot90(x, -1)),
 ]
 
 
@@ -102,13 +120,13 @@ class Board:
         return Board.np_board_to_code(self._board)
 
     @property
-    def normalization_transform(self):
+    def normalization_transform(self) -> Tuple[Callable, Callable]:
         """Return the transform function that will normalize the board such that
         all symmetrical boards are the same.
         """
         all_transforms = [
-            (transform, Board.np_board_to_code(transform(self._board)))
-            for transform in BOARD_SYMMETRY_TRANSFORMS
+            ((transform, inverse_transform), Board.np_board_to_code(transform(self._board)))
+            for transform, inverse_transform in zip(BOARD_SYMMETRY_TRANSFORMS, BOARD_SYMMETRY_TRANSFORMS_INVERSE)
         ]
 
         # Pick the transform that yields the minimum board code. Since all board

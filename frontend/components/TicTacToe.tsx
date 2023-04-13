@@ -72,12 +72,25 @@ export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState>
         // can affect these values.
         
         if (this.lastAgentStep != null) {
-            // TODO(richie): Send this to playdata API
-            console.log({
+            const playdata = {
                 "initial_state": this.lastAgentStep.initialState,
                 "action": this.lastAgentStep.action,
-                "resultant_state": Array.from(state),
-            });
+                "resultant_state": state,
+                "reward": 0,
+                "agent_is_x": false,
+            };
+            console.log("Sending playdata:")
+            console.log(playdata)
+
+            if (!process.env.NEXT_PUBLIC_DISABLE_PLAYDATA_PUSH) {
+                await fetch(`${process.env.NEXT_PUBLIC_PLAYDATA_API}/submit`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(playdata),
+                });
+            }
         }
 
         this.lastAgentStep = {

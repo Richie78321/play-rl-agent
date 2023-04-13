@@ -61,7 +61,7 @@ class Board:
     @classmethod
     def from_board_code(cls, board_code: int):
         cell_values = list(str(board_code).zfill(9))
-        np_board = np.array(cell_values).reshape((3, 3))
+        np_board = np.array(cell_values, dtype=np.int64).reshape((3, 3))
         return Board(np_board=np_board)
 
     @staticmethod

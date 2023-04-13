@@ -1,7 +1,7 @@
 import pickle
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Tuple
 
 import numpy as np
 
@@ -44,6 +44,8 @@ class RandomAgent(Agent):
 StateActionTable = Dict[int, Dict[int, float]]
 
 RANDOM_SELECTION_EPSILON = 0.1
+LEARNING_RATE = 0.5
+DISCOUNT_FACTOR = 0.99
 
 
 class QLearningAgent(Agent):
@@ -87,6 +89,30 @@ class QLearningAgent(Agent):
     def save(self):
         with self._save_path.open("wb") as save_file:
             pickle.dump(self._value_table, file=save_file)
+
+    def _max_state_value(self, state_code: int) -> float:
+        action_values = self._value_table.get(state_code, {})
+        if len(action_values) == 0:
+            # When there are no recorded values for this state, we default to a value
+            # of 0.
+            return 0.0
+
+        return max(action_values.values())
+
+    def train(self, data: List[Tuple[int, int, int, float]]):
+        for initial_state_code, action_code, resultant_state_code, reward in data:
+            self._value_table.setdefault(initial_state_code, {})
+            resultant_state_value = self._max_state_value(resultant_state_code)
+            initial_state_value = self._value_table[initial_state_code].get(
+                action_code, 0.0
+            )
+
+            # https://en.wikipedia.org/wiki/Q-learning#Algorithm
+            self._value_table[initial_state_code][
+                action_code
+            ] = initial_state_value + LEARNING_RATE * (
+                reward + DISCOUNT_FACTOR * resultant_state_value - initial_state_value
+            )
 
     @property
     def name(self) -> str:

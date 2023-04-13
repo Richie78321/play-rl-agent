@@ -8,8 +8,12 @@ jsonschema==4.17.3
 kafka-python==2.0.2
 MarkupSafe==2.1.2
 numpy==1.24.2
+psycopg2-binary==2.9.6
 pyrsistent==0.19.3
+readerwriterlock==1.0.9
+schedule==1.2.0
 six==1.16.0
 -e ./tictactoe
 tqdm==4.65.0
+typing_extensions==4.5.0
 Werkzeug==2.2.3

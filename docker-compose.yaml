@@ -82,6 +82,8 @@ services:
     restart: always
     environment:
       - AGENT_DATA_PATH=/agent_data/agent_data.pickle
+      - POSTGRES_CONNECTION=postgresql://user:password@postgres:5432/playdata
+      - PYTHONUNBUFFERED=TRUE
     volumes:
      - ./agent_data/:/agent_data/
   playdata-api:
@@ -102,7 +104,7 @@ services:
     image: nginx:latest
     restart: always
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
 volumes:

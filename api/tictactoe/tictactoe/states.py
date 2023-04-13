@@ -128,16 +128,16 @@ class Board:
 
     @property
     def win_condition(self) -> Tuple[int, bool]:
-        # Determine whether the game has tied
-        if np.all(self._board != 0):
-            return 0, True
-
         # Determine whether one of the players has won
         flat_board = self._board.flatten()
         for player in [1, 2]:
             for condition in WIN_CONDITIONS:
                 if np.all(flat_board[condition] == player):
                     return player, False
+
+        # Determine whether the game has tied
+        if np.all(self._board != 0):
+            return 0, True
 
         return 0, False
 

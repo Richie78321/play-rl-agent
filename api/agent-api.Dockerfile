@@ -19,4 +19,4 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 EXPOSE 80
 
-CMD ["gunicorn", "-b", "0.0.0.0:80", "--chdir", "agent-api", "app:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:80", "--chdir", "agent-api", "--log-level", "debug", "app:app"]

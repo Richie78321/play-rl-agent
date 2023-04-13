@@ -1,3 +1,4 @@
+import pprint
 from pathlib import Path
 
 import numpy as np
@@ -50,10 +51,15 @@ def evaluate_game(agent1: Agent, agent2: Agent) -> int:
 
 
 if __name__ == "__main__":
+    agent_data = Path("../agent_data/agent_data.pickle")
+    assert agent_data.exists()
+
+    learning_agent = QLearningAgent(save_path=agent_data)
+    pprint.pprint(learning_agent._value_table)
     # The QLearning agent is strictly the second agent for now, as the agent
     # is only trained to be player 2 for simplicty.
     evaluate(
         10000,
         agent1=RandomAgent(),
-        agent2=QLearningAgent(save_path=Path("../../agent_data/agent_data.pickle")),
+        agent2=learning_agent,
     )

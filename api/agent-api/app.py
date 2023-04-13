@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
+from training import LearningAgentWrapper
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from tictactoe.agent import QLearningAgent
@@ -29,17 +30,15 @@ game_state_validator = Draft7Validator(
     }
 )
 
-agent_data_path = os.getenv("AGENT_DATA_PATH")
-if agent_data_path is None:
-    agent_data_path = "../../agent_data/agent_data.pickle"
-agent = QLearningAgent(Path(agent_data_path))
+agent_wrapper = LearningAgentWrapper()
 
 
 def get_agent_action(game_state) -> Board:
     game_board = Board.from_text_board(
         game_state["state"], agent_is_x=game_state["agent_is_x"]
     )
-    action = agent.act(game_board)
+    with agent_wrapper.agent_read_lock:
+        action = agent_wrapper.agent.act(game_board)
 
     if not game_state["agent_is_x"]:
         # Swap back the symbols of the action if the agent is

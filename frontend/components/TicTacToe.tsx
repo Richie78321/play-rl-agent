@@ -1,4 +1,5 @@
-import React, { Component, useState } from "react";
+import React, { Component } from "react";
+import { Mutex } from "async-mutex";
 
 enum CellState {
     Empty = "-",
@@ -10,6 +11,8 @@ const STRING_TO_CELL_STATE: {[key: string]: CellState} = {
     "X": CellState.X,
     "O": CellState.O,
 };
+
+type GameState = Array<CellState>;
 
 interface SquareProps {
     state: CellState;
@@ -24,7 +27,7 @@ const Square: React.FC<SquareProps> = ({state, callback, disabled}) => {
     }}>{state}</button>
 }
 
-async function getAgentAction(boardState: Array<CellState>) {
+async function getAgentAction(boardState: GameState): Promise<GameState> {
     const resp = await fetch(`${process.env.NEXT_PUBLIC_AGENT_API}/action`, {
         method: "POST",
         headers: {
@@ -39,14 +42,20 @@ async function getAgentAction(boardState: Array<CellState>) {
     return rawAction.map((val) => STRING_TO_CELL_STATE[val]);
 }
 
-interface TicTacToeProps {
 
-}
+interface TicTacToeProps {}
 interface TicTacToeState {
-    boardState: Array<CellState>;
+    boardState: GameState;
     loading: boolean;
 }
+interface AgentStep {
+    initialState: GameState;
+    action: GameState;
+}
 export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState> {
+    lastAgentStep: AgentStep | null;
+    gameMutex: Mutex;
+    
     constructor(props: TicTacToeProps) {
         super(props);
 
@@ -54,10 +63,34 @@ export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState>
             boardState: new Array(9).fill(CellState.Empty),
             loading: false,
         };
+        this.gameMutex = new Mutex();
+        this.lastAgentStep = null;
+    }
+
+    async sendAgentStep(state: GameState, action: GameState) {
+        // It is important that the GameState arrays are cloned -- otherwise downstream edits
+        // can affect these values.
+        
+        if (this.lastAgentStep != null) {
+            // TODO(richie): Send this to playdata API
+            console.log({
+                "initial_state": this.lastAgentStep.initialState,
+                "action": this.lastAgentStep.action,
+                "resultant_state": Array.from(state),
+            });
+        }
+
+        this.lastAgentStep = {
+            initialState: Array.from(state),
+            action: Array.from(action),
+        };
     }
 
     render() {
         const squareCallback = async (cellId: number) => {
+            // Even though JavaScript is single-threaded, we use a mutex to ensure
+            // that only one callback runs this section at a time.
+            await this.gameMutex.acquire()
             this.setState({
                 ...this.state,
                 loading: true,
@@ -76,13 +109,15 @@ export default class TicTacToe extends Component<TicTacToeProps, TicTacToeState>
             if (actionIndex == -1 || newBoardState[actionIndex] != CellState.Empty) {
                 throw new Error("invalid action from agent")
             }
+            await this.sendAgentStep(newBoardState, agentAction);
             newBoardState[actionIndex] = CellState.O;
-    
+
             this.setState({
                 ...this.state,
                 boardState: newBoardState,
                 loading: false,
             });
+            await this.gameMutex.release()
         }
     
         const boardSquares = this.state.boardState.map((state, index) => <Square key={index} state={state} disabled={this.state.loading} callback={(e) => squareCallback(index)} />)

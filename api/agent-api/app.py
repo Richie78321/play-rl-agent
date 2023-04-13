@@ -5,11 +5,10 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
-from werkzeug.middleware.proxy_fix import ProxyFix
-
 from tictactoe.agent import QLearningAgent
 from tictactoe.schema import state_schema
 from tictactoe.states import Board
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 CORS(app)

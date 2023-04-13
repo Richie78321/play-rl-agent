@@ -24,7 +24,7 @@ const Square: React.FC<SquareProps> = ({state, callback}) => {
 }
 
 async function getAgentAction(boardState: Array<CellState>) {
-    const resp = await fetch(new URL("/action", process.env.NEXT_PUBLIC_AGENT_API).toString(), {
+    const resp = await fetch(`${process.env.NEXT_PUBLIC_AGENT_API}/action`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

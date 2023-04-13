@@ -1,20 +1,17 @@
-import json
-import os
-
 from flask import Flask, jsonify, request
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
-from kafka import KafkaProducer
-from tictactoe.schema import state_schema
-from tictactoe.states import Board
+from playdatakafka import Kafka
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-KAFKA_PLAYDATA_TOPIC = "playdata"
+from tictactoe.schema import state_schema
+from tictactoe.states import Board
 
 app = Flask(__name__)
-
 # Configuration required to use Flask behind a proxy.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+kafka = Kafka()
 
 playdata_validator = Draft7Validator(
     schema={
@@ -29,12 +26,6 @@ playdata_validator = Draft7Validator(
         "required": ["initial_state", "action", "resultant_state", "reward"],
         "additional_properties": False,
     }
-)
-
-if os.environ.get("KAFKA_BOOTSTRAP_SERVER") is None:
-    raise EnvironmentError("Must define KAFKA_BOOTSTRAP_SERVER")
-kafka_producer = KafkaProducer(
-    bootstrap_servers=os.environ.get("KAFKA_BOOTSTRAP_SERVER")
 )
 
 
@@ -74,9 +65,5 @@ def submit_playdata():
     except ValidationError as e:
         return jsonify({"message": str(e)}), 400
 
-    kafka_producer.send(
-        topic=KAFKA_PLAYDATA_TOPIC,
-        value=json.dumps(process_playdata_json(playdata)).encode(),
-    )
-
+    kafka.send(process_playdata_json(playdata))
     return jsonify({"message": "success"}), 200

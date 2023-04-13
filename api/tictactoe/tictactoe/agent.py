@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict
 
 import numpy as np
+
 from tictactoe.states import Board
 
 
@@ -43,6 +44,7 @@ class QLearningAgent(Agent):
 
     def __init__(self, save_path: Path):
         self._save_path = save_path
+        self._random_agent = RandomAgent()
         self.load()
 
     def act(self, game_state: Board) -> Board:
@@ -68,10 +70,11 @@ class QLearningAgent(Agent):
     def load(self):
         if not self._save_path.exists():
             self._value_table = {}
+            return
 
-        with self._save_path.open("r") as save_file:
+        with self._save_path.open("rb") as save_file:
             self._value_table = pickle.load(save_file)
 
     def save(self):
-        with self._save_path.open("w") as save_file:
+        with self._save_path.open("wb") as save_file:
             pickle.dump(self._value_table, file=save_file)

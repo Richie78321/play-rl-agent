@@ -1,13 +1,15 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
 from playdatakafka import Kafka
-from werkzeug.middleware.proxy_fix import ProxyFix
-
 from tictactoe.schema import state_schema
 from tictactoe.states import Board
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+CORS(app)
+
 # Configuration required to use Flask behind a proxy.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 

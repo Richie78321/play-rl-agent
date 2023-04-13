@@ -57,6 +57,21 @@ BOARD_SYMMETRY_TRANSFORMS_INVERSE = [
     lambda x: np.flipud(np.rot90(x, -1)),
 ]
 
+WIN_CONDITIONS = [
+    # Horizontal win conditions
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    # Vertical win conditions
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    # Diagonal win condition
+    [0, 4, 8],
+    # Anti-diagonal win condition
+    [2, 4, 6],
+]
+
 
 class Board:
     _board: np.ndarray
@@ -110,6 +125,21 @@ class Board:
 
     def __str__(self):
         return "\n".join([" ".join(row) for row in self.text_board])
+
+    @property
+    def win_condition(self) -> Tuple[int, bool]:
+        # Determine whether the game has tied
+        if np.all(self._board != 0):
+            return 0, True
+
+        # Determine whether one of the players has won
+        flat_board = self._board.flatten()
+        for player in [1, 2]:
+            for condition in WIN_CONDITIONS:
+                if np.all(flat_board[condition] == player):
+                    return player, False
+
+        return 0, False
 
     @property
     def text_board(self):

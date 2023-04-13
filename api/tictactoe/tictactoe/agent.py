@@ -4,12 +4,18 @@ from pathlib import Path
 from typing import Dict
 
 import numpy as np
+
 from tictactoe.states import Board
 
 
 class Agent(ABC):
     @abstractmethod
     def act(self, game_state: Board) -> Board:
+        pass
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
         pass
 
 
@@ -29,6 +35,10 @@ class RandomAgent(Agent):
         action = np.zeros(shape=(3, 3), dtype=np.int64)
         action[tuple(choice_coordinates)] = 1
         return Board(action, agent_is_x=True)
+
+    @property
+    def name(self) -> str:
+        return "Random Agent"
 
 
 StateActionTable = Dict[int, Dict[int, float]]
@@ -77,3 +87,7 @@ class QLearningAgent(Agent):
     def save(self):
         with self._save_path.open("wb") as save_file:
             pickle.dump(self._value_table, file=save_file)
+
+    @property
+    def name(self) -> str:
+        return "QLearning Agent"

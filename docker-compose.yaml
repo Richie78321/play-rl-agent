@@ -80,6 +80,10 @@ services:
       context: ./api
       dockerfile: ./agent-api.Dockerfile
     restart: always
+    environment:
+      - AGENT_DATA_PATH=/agent_data/agent_data.pickle
+    volumes:
+     - ./agent_data/:/agent_data/
   playdata-api:
     build:
       context: ./api

@@ -1,11 +1,15 @@
+import os
+from pathlib import Path
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
-from tictactoe.agent import RandomAgent
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+from tictactoe.agent import QLearningAgent
 from tictactoe.schema import state_schema
 from tictactoe.states import Board
-from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
 CORS(app)
@@ -25,7 +29,10 @@ game_state_validator = Draft7Validator(
     }
 )
 
-agent = RandomAgent()
+agent_data_path = os.getenv("AGENT_DATA_PATH")
+if agent_data_path is None:
+    agent_data_path = "./agent_data.pickle"
+agent = QLearningAgent(Path(agent_data_path))
 
 
 def get_agent_action(game_state) -> Board:

@@ -1,11 +1,12 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 from jsonschema import Draft7Validator
 from jsonschema.exceptions import ValidationError
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+from tictactoe.agent import RandomAgent
 from tictactoe.schema import state_schema
 from tictactoe.states import Board
-from tictactoe.agent import RandomAgent
-from werkzeug.middleware.proxy_fix import ProxyFix
-from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
@@ -27,10 +28,10 @@ game_state_validator = Draft7Validator(
 
 agent = RandomAgent()
 
+
 def get_agent_action(game_state) -> Board:
     game_board = Board.from_text_board(
-        game_state["state"],
-        agent_is_x=game_state["agent_is_x"]
+        game_state["state"], agent_is_x=game_state["agent_is_x"]
     )
     action = agent.act(game_board)
 
@@ -43,6 +44,7 @@ def get_agent_action(game_state) -> Board:
 
     return action
 
+
 @app.post("/action")
 def take_action():
     game_state = request.get_json()
@@ -50,10 +52,11 @@ def take_action():
         game_state_validator.validate(game_state)
     except ValidationError as e:
         return jsonify({"message": str(e)}), 400
-    
+
     action = get_agent_action(game_state)
-    return jsonify({
-        "message": "success",
-        "action": list(action.text_board.flatten()),
-    })
-    
+    return jsonify(
+        {
+            "message": "success",
+            "action": list(action.text_board.flatten()),
+        }
+    )

@@ -119,6 +119,6 @@ class Board:
 
     def transform(self, transform) -> "Board":
         return Board(np_board=transform(self._board))
-    
+
     def swap_symbols(self) -> "Board":
         return Board(np_board=np.vectorize(SYMBOL_SWAP.get)(self._board))

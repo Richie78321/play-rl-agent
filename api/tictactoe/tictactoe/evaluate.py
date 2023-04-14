@@ -1,4 +1,3 @@
-import pprint
 from pathlib import Path
 
 import numpy as np
@@ -6,6 +5,8 @@ from tqdm import tqdm
 
 from tictactoe.agent import Agent, QLearningAgent, RandomAgent
 from tictactoe.states import SYMBOL_SWAP, Board
+
+import pprint
 
 
 def evaluate(rounds: int, agent1: Agent, agent2: Agent):
@@ -16,8 +17,8 @@ def evaluate(rounds: int, agent1: Agent, agent2: Agent):
         # Record the results.
         wins[result] += 1
 
-    print(f"{agent1.name} Wins: {wins[1]} ({100 * wins[0] / rounds}%)")
-    print(f"{agent2.name} Wins: {wins[2]} ({100 * wins[1] / rounds}%)")
+    print(f"{agent1.name} Wins: {wins[1]} ({100 * wins[1] / rounds}%)")
+    print(f"{agent2.name} Wins: {wins[2]} ({100 * wins[2] / rounds}%)")
     print(f"Ties: {wins[0]} ({100 * wins[0] / rounds}%)")
 
 

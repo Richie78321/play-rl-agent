@@ -46,7 +46,7 @@ StateActionTable = Dict[int, Dict[int, float]]
 RANDOM_SELECTION_EPSILON = 0.1
 SELECTION_SOFTMAX_TEMPERATURE = 0.1
 LEARNING_RATE = 0.3
-DISCOUNT_FACTOR = 0.99
+DISCOUNT_FACTOR = 0.90
 
 def softmax(x, t=1):
     x = np.array(x) / t

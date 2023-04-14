@@ -44,9 +44,14 @@ class RandomAgent(Agent):
 StateActionTable = Dict[int, Dict[int, float]]
 
 RANDOM_SELECTION_EPSILON = 0.1
-LEARNING_RATE = 0.5
+SELECTION_SOFTMAX_TEMPERATURE = 0.1
+LEARNING_RATE = 0.3
 DISCOUNT_FACTOR = 0.99
 
+def softmax(x, t=1):
+    x = np.array(x) / t
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum()
 
 class QLearningAgent(Agent):
     _save_path: Path
@@ -72,11 +77,13 @@ class QLearningAgent(Agent):
             # Choose a random action
             return self._random_agent.act(game_state=game_state)
 
-        # Choose the optimal action according to the current value table.
-        optimal_action = max(action_values, key=action_values.get)
+        # Choose from the actions using softmax according to the current value table.
+        actions = list(action_values.keys())
+        softmax_scores = softmax(x=list(map(action_values.get, actions)), t=SELECTION_SOFTMAX_TEMPERATURE)
+        action_choice = np.random.choice(actions, p=softmax_scores)
 
         # Apply the normalization inverse to the action so it matches the true game state.
-        return Board.from_board_code(optimal_action).transform(normalization_inverse)
+        return Board.from_board_code(action_choice).transform(normalization_inverse)
 
     def load(self):
         if not self._save_path.exists():

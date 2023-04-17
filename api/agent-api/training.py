@@ -55,17 +55,14 @@ class LearningAgentWrapper:
             # Save the current agent to disk.
             self.agent.save()
 
-            # Make a clone of the agent from disk.
-            new_agent = QLearningAgent(self.agent_data_path)
-            new_agent.load()
-
         # TODO(richie): Implement some strategy for pruning old data. For now
-        # data is only used once.
+        # this is avoided by retraining the model from scratch.
         training_data = self._playdata.get()
         print(f"Training with {len(training_data)} data points")
         if len(training_data) <= 0:
             return
-
+        
+        new_agent = QLearningAgent(self.agent._save_path)
         new_agent.train(data=training_data)
 
         with self.agent_write_lock:
@@ -84,13 +81,9 @@ class PostgresPlaydata:
         # For now data is fully loaded into memory. In the future this could be improved
         # if necessary.
         with self._connection.cursor() as cur:
+            # We order the data by descending ID to ensure that experiences are replayed
+            # in reverse order of execution. This makes reward propagation faster.
             cur.execute(
-                "SELECT initial_state, action, resultant_state, reward FROM playdata"
+                "SELECT initial_state, action, resultant_state, reward FROM playdata ORDER BY id DESC"
             )
-            values = cur.fetchall()
-
-            # Delete the values that are being used for training.
-            cur.execute("DELETE FROM playdata")
-            self._connection.commit()
-
-        return values
+            return cur.fetchall()

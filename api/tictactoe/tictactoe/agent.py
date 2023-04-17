@@ -1,13 +1,11 @@
 import pickle
 from abc import ABC, abstractmethod
+from itertools import repeat
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
-
 from tictactoe.states import Board
-
-from itertools import repeat
 
 
 class Agent(ABC):
@@ -50,10 +48,12 @@ LEARNING_RATE = 0.1
 DISCOUNT_FACTOR = 0.85
 TRAINING_DATA_REUSE = 5
 
+
 def softmax(x, t=1):
     x = np.array(x) / t
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum()
+
 
 class QLearningAgent(Agent):
     _save_path: Path
@@ -73,12 +73,14 @@ class QLearningAgent(Agent):
         # https://en.wikipedia.org/wiki/Q-learning#Initial_conditions_(Q0)
         # The default reward for an action is 1. This promotes action exploration.
         action_values = self._action_values(normalized_game_state.code)
-        
+
         # We use a softmax selection algorithm over the current expected rewards
         # from each possible action.
         action_codes = list(action_values.keys())
         action_rewards = list(map(action_values.get, action_codes))
-        action_choice = np.random.choice(action_codes, p=softmax(action_rewards, t=SOFTMAX_TEMPERATURE))
+        action_choice = np.random.choice(
+            action_codes, p=softmax(action_rewards, t=SOFTMAX_TEMPERATURE)
+        )
 
         # Apply the normalization inverse to the action so it matches the true game state.
         return Board.from_board_code(action_choice).transform(normalization_inverse)
@@ -96,13 +98,17 @@ class QLearningAgent(Agent):
             pickle.dump(self._value_table, file=save_file)
 
     def _action_values(self, state_code: int) -> Dict[int, float]:
-        possible_action_codes = [action.code for action in Board.from_board_code(state_code).possible_actions]
+        possible_action_codes = [
+            action.code for action in Board.from_board_code(state_code).possible_actions
+        ]
         action_values = self._value_table.get(state_code, {})
 
         # If a possible action has no expected value, we assume it to be 1.
-        return { action_code: action_values.get(action_code, 1.0) for action_code in possible_action_codes }
+        return {
+            action_code: action_values.get(action_code, 1.0)
+            for action_code in possible_action_codes
+        }
 
-    
     def _max_state_value(self, state_code: int) -> float:
         action_values = self._value_table.get(state_code, {})
         if len(action_values) == 0:
@@ -126,7 +132,8 @@ class QLearningAgent(Agent):
                 self._value_table[initial_state_code][
                     action_code
                 ] = initial_state_value + LEARNING_RATE * (
-                    (reward + DISCOUNT_FACTOR * resultant_state_value) - initial_state_value
+                    (reward + DISCOUNT_FACTOR * resultant_state_value)
+                    - initial_state_value
                 )
 
     @property

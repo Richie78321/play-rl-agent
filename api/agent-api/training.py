@@ -7,7 +7,6 @@ from typing import Tuple
 import psycopg2
 import schedule
 from readerwriterlock import rwlock
-
 from tictactoe.agent import QLearningAgent
 
 
@@ -61,7 +60,7 @@ class LearningAgentWrapper:
         print(f"Training with {len(training_data)} data points")
         if len(training_data) <= 0:
             return
-        
+
         new_agent = QLearningAgent(self.agent._save_path)
         new_agent.train(data=training_data)
 

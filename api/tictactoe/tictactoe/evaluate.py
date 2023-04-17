@@ -1,14 +1,12 @@
+import pprint
 from pathlib import Path
+from typing import List, NamedTuple, Tuple
 
 import numpy as np
-from tqdm import tqdm
-
 from tictactoe.agent import Agent, QLearningAgent, RandomAgent
 from tictactoe.states import SYMBOL_SWAP, Board
+from tqdm import tqdm
 
-from typing import List, Tuple, NamedTuple
-
-import pprint
 
 def evaluate(rounds: int, agent1: Agent, agent2: Agent):
     wins = [0, 0, 0]
@@ -36,12 +34,14 @@ def evaluate(rounds: int, agent1: Agent, agent2: Agent):
     print(f"{agent2.name} Wins: {wins[2]} ({100 * wins[2] / rounds}%)")
     print(f"Ties: {wins[0]} ({100 * wins[0] / rounds}%)")
 
+
 class StepData(NamedTuple):
     agent_id: int
     state: Board
     resultant_state: Board
     action: Board
     reward: float
+
 
 def evaluate_game(agent1: Agent, agent2: Agent) -> Tuple[int, List[StepData]]:
     np_board = np.zeros(shape=(3, 3), dtype=np.int64)
@@ -56,15 +56,14 @@ def evaluate_game(agent1: Agent, agent2: Agent) -> Tuple[int, List[StepData]]:
         agent_id = turn % 2
 
         # Get the agent's action and apply it
-        action = (
-            agents[agent_id]
-            .act(Board(np_board=np_board, agent_is_x=agent_is_x[agent_id]))
+        action = agents[agent_id].act(
+            Board(np_board=np_board, agent_is_x=agent_is_x[agent_id])
         )
         np_action = action._board
         if not agent_is_x[agent_id]:
             # Swap the player of the agent's action.
             np_action = np.vectorize(SYMBOL_SWAP.get)(np_action)
-        
+
         # Apply the action
         new_np_board = np_board + np_action
         winner, tie = Board(np_board=new_np_board).win_condition
@@ -78,7 +77,7 @@ def evaluate_game(agent1: Agent, agent2: Agent) -> Tuple[int, List[StepData]]:
             reward=1.0 if winner == agent_id + 1 else 0.0,
         )
         episode_data.append(step_data)
-        
+
         if winner != 0:
             return winner, episode_data
         if tie:

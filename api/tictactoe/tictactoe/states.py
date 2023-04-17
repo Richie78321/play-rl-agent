@@ -140,7 +140,7 @@ class Board:
             return 0, True
 
         return 0, False
-    
+
     @property
     def possible_actions(self, player="X") -> List["Board"]:
         empty_cell_coordinates = zip(*np.where(self._board == 0))

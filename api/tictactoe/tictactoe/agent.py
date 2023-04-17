@@ -43,10 +43,14 @@ class RandomAgent(Agent):
 
 StateActionTable = Dict[int, Dict[int, float]]
 
-RANDOM_SELECTION_EPSILON = 0.1
-LEARNING_RATE = 0.5
-DISCOUNT_FACTOR = 0.99
+SOFTMAX_TEMPERATURE = 0.5
+LEARNING_RATE = 0.2
+DISCOUNT_FACTOR = 0.75
 
+def softmax(x, t=1):
+    x = np.array(x) / t
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum()
 
 class QLearningAgent(Agent):
     _save_path: Path
@@ -63,20 +67,17 @@ class QLearningAgent(Agent):
         normalization, normalization_inverse = game_state.normalization_transform
         normalized_game_state = game_state.transform(normalization)
 
-        # We use an Epsilon-Greedy selection algorithm for now out of simplicity.
-        # This could likely be improved in the future.
-        action_values = self._value_table.get(normalized_game_state.code, {})
-        if len(action_values) == 0 or np.random.choice(
-            [True, False], p=[RANDOM_SELECTION_EPSILON, 1 - RANDOM_SELECTION_EPSILON]
-        ):
-            # Choose a random action
-            return self._random_agent.act(game_state=game_state)
-
-        # Choose the optimal action according to the current value table.
-        optimal_action = max(action_values, key=action_values.get)
+        # The default reward for an action is 0.
+        action_values = self._action_values(normalized_game_state.code)
+        
+        # We use a softmax selection algorithm over the current expected rewards
+        # from each possible action.
+        action_codes = list(action_values.keys())
+        action_rewards = list(map(action_values.get, action_codes))
+        action_choice = np.random.choice(action_codes, p=softmax(action_rewards, t=SOFTMAX_TEMPERATURE))
 
         # Apply the normalization inverse to the action so it matches the true game state.
-        return Board.from_board_code(optimal_action).transform(normalization_inverse)
+        return Board.from_board_code(action_choice).transform(normalization_inverse)
 
     def load(self):
         if not self._save_path.exists():
@@ -90,6 +91,14 @@ class QLearningAgent(Agent):
         with self._save_path.open("wb") as save_file:
             pickle.dump(self._value_table, file=save_file)
 
+    def _action_values(self, state_code: int) -> Dict[int, float]:
+        possible_action_codes = [action.code for action in Board.from_board_code(state_code).possible_actions]
+        action_values = self._value_table.get(state_code, {})
+
+        # If a possible action has no expected value, we assume it to be 0.
+        return { action_code: action_values.get(action_code, 0) for action_code in possible_action_codes }
+
+    
     def _max_state_value(self, state_code: int) -> float:
         action_values = self._value_table.get(state_code, {})
         if len(action_values) == 0:
@@ -102,6 +111,7 @@ class QLearningAgent(Agent):
     def train(self, data: List[Tuple[int, int, int, float]]):
         for initial_state_code, action_code, resultant_state_code, reward in data:
             self._value_table.setdefault(initial_state_code, {})
+
             resultant_state_value = self._max_state_value(resultant_state_code)
             initial_state_value = self._value_table[initial_state_code].get(
                 action_code, 0.0
@@ -111,7 +121,7 @@ class QLearningAgent(Agent):
             self._value_table[initial_state_code][
                 action_code
             ] = initial_state_value + LEARNING_RATE * (
-                reward + DISCOUNT_FACTOR * resultant_state_value - initial_state_value
+                (reward + DISCOUNT_FACTOR * resultant_state_value) - initial_state_value
             )
 
     @property

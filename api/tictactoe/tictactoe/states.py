@@ -140,6 +140,17 @@ class Board:
             return 0, True
 
         return 0, False
+    
+    @property
+    def possible_actions(self, player="X") -> List["Board"]:
+        empty_cell_coordinates = zip(*np.where(self._board == 0))
+        actions = []
+        for coordinate in empty_cell_coordinates:
+            np_action = np.zeros(shape=(3, 3), dtype=np.int64)
+            np_action[coordinate] = POSITION_TO_VALUE[player]
+            actions.append(Board(np_board=np_action))
+
+        return actions
 
     @property
     def text_board(self):

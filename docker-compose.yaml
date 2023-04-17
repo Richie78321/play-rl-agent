@@ -96,6 +96,9 @@ services:
     depends_on:
       - kafka1
       - kafka2
+    volumes:
+    # Needed for testing with Monte-Carlo
+     - ./agent_data/:/agent_data/:ro
   frontend:
     build:
       context: ./frontend
@@ -104,7 +107,7 @@ services:
     image: nginx:latest
     restart: always
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
 volumes:

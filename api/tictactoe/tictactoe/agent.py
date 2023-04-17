@@ -7,6 +7,8 @@ import numpy as np
 
 from tictactoe.states import Board
 
+from itertools import repeat
+
 
 class Agent(ABC):
     @abstractmethod
@@ -43,9 +45,10 @@ class RandomAgent(Agent):
 
 StateActionTable = Dict[int, Dict[int, float]]
 
-SOFTMAX_TEMPERATURE = 0.5
-LEARNING_RATE = 0.2
-DISCOUNT_FACTOR = 0.75
+SOFTMAX_TEMPERATURE = 0.1
+LEARNING_RATE = 0.1
+DISCOUNT_FACTOR = 0.85
+TRAINING_DATA_REUSE = 5
 
 def softmax(x, t=1):
     x = np.array(x) / t
@@ -67,7 +70,8 @@ class QLearningAgent(Agent):
         normalization, normalization_inverse = game_state.normalization_transform
         normalized_game_state = game_state.transform(normalization)
 
-        # The default reward for an action is 0.
+        # https://en.wikipedia.org/wiki/Q-learning#Initial_conditions_(Q0)
+        # The default reward for an action is 1. This promotes action exploration.
         action_values = self._action_values(normalized_game_state.code)
         
         # We use a softmax selection algorithm over the current expected rewards
@@ -95,8 +99,8 @@ class QLearningAgent(Agent):
         possible_action_codes = [action.code for action in Board.from_board_code(state_code).possible_actions]
         action_values = self._value_table.get(state_code, {})
 
-        # If a possible action has no expected value, we assume it to be 0.
-        return { action_code: action_values.get(action_code, 0) for action_code in possible_action_codes }
+        # If a possible action has no expected value, we assume it to be 1.
+        return { action_code: action_values.get(action_code, 1.0) for action_code in possible_action_codes }
 
     
     def _max_state_value(self, state_code: int) -> float:
@@ -109,20 +113,21 @@ class QLearningAgent(Agent):
         return max(action_values.values())
 
     def train(self, data: List[Tuple[int, int, int, float]]):
-        for initial_state_code, action_code, resultant_state_code, reward in data:
-            self._value_table.setdefault(initial_state_code, {})
+        for _ in range(TRAINING_DATA_REUSE):
+            for initial_state_code, action_code, resultant_state_code, reward in data:
+                self._value_table.setdefault(initial_state_code, {})
 
-            resultant_state_value = self._max_state_value(resultant_state_code)
-            initial_state_value = self._value_table[initial_state_code].get(
-                action_code, 0.0
-            )
+                resultant_state_value = self._max_state_value(resultant_state_code)
+                initial_state_value = self._value_table[initial_state_code].get(
+                    action_code, 0.0
+                )
 
-            # https://en.wikipedia.org/wiki/Q-learning#Algorithm
-            self._value_table[initial_state_code][
-                action_code
-            ] = initial_state_value + LEARNING_RATE * (
-                (reward + DISCOUNT_FACTOR * resultant_state_value) - initial_state_value
-            )
+                # https://en.wikipedia.org/wiki/Q-learning#Algorithm
+                self._value_table[initial_state_code][
+                    action_code
+                ] = initial_state_value + LEARNING_RATE * (
+                    (reward + DISCOUNT_FACTOR * resultant_state_value) - initial_state_value
+                )
 
     @property
     def name(self) -> str:

@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 def evaluate(rounds: int, agent1: Agent, agent2: Agent):
     wins = [0, 0, 0]
-    for _ in tqdm(range(rounds), desc="Evaluating"):
+    for _ in range(rounds):
         if np.random.choice([True, False]):
             agents = [agent1, agent2]
             result_mapping = {
@@ -30,9 +30,7 @@ def evaluate(rounds: int, agent1: Agent, agent2: Agent):
         result = result_mapping[result]
         wins[result] += 1
 
-    print(f"{agent1.name} Wins: {wins[1]} ({100 * wins[1] / rounds}%)")
-    print(f"{agent2.name} Wins: {wins[2]} ({100 * wins[2] / rounds}%)")
-    print(f"Ties: {wins[0]} ({100 * wins[0] / rounds}%)")
+    return wins
 
 
 class StepData(NamedTuple):
@@ -91,12 +89,18 @@ if __name__ == "__main__":
     agent_data = Path("../agent_data/agent_data.pickle")
     assert agent_data.exists()
 
+    random_agent = RandomAgent()
     learning_agent = QLearningAgent(save_path=agent_data)
     pprint.pprint(learning_agent._value_table)
     # The QLearning agent is strictly the second agent for now, as the agent
     # is only trained to be player 2 for simplicty.
-    evaluate(
-        10000,
-        agent1=RandomAgent(),
+    rounds = 10000
+    wins = evaluate(
+        rounds=rounds,
+        agent1=random_agent,
         agent2=learning_agent,
     )
+
+    print(f"{random_agent.name} Wins: {wins[1]} ({100 * wins[1] / rounds}%)")
+    print(f"{learning_agent.name} Wins: {wins[2]} ({100 * wins[2] / rounds}%)")
+    print(f"Ties: {wins[0]} ({100 * wins[0] / rounds}%)")

@@ -43,8 +43,9 @@ class RandomAgent(Agent):
 
 StateActionTable = Dict[int, Dict[int, float]]
 
+GREEDY_SELECTION = False
 SOFTMAX_TEMPERATURE = 0.1
-LEARNING_RATE = 0.1
+LEARNING_RATE = 0.5
 DISCOUNT_FACTOR = 0.85
 TRAINING_DATA_REUSE = 5
 
@@ -74,13 +75,16 @@ class QLearningAgent(Agent):
         # The default reward for an action is 1. This promotes action exploration.
         action_values = self._action_values(normalized_game_state.code)
 
-        # We use a softmax selection algorithm over the current expected rewards
-        # from each possible action.
-        action_codes = list(action_values.keys())
-        action_rewards = list(map(action_values.get, action_codes))
-        action_choice = np.random.choice(
-            action_codes, p=softmax(action_rewards, t=SOFTMAX_TEMPERATURE)
-        )
+        if GREEDY_SELECTION:
+            action_choice = max(action_values.keys(), key=action_values.get)
+        else:
+            # We use a softmax selection algorithm over the current expected rewards
+            # from each possible action.
+            action_codes = list(action_values.keys())
+            action_rewards = list(map(action_values.get, action_codes))
+            action_choice = np.random.choice(
+                action_codes, p=softmax(action_rewards, t=SOFTMAX_TEMPERATURE)
+            )
 
         # Apply the normalization inverse to the action so it matches the true game state.
         return Board.from_board_code(action_choice).transform(normalization_inverse)

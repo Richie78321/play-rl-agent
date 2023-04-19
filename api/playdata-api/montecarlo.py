@@ -9,11 +9,12 @@ from tqdm import tqdm
 
 
 # TODO(richie): Clean up this quick and dirty implementation
-def generate_montecarlo(rl_agent: Agent, episodes: int = 10000):
+def generate_montecarlo(episodes: int = 10000):
     playdata = Kafka()
-    random_agent = RandomAgent()
+    random_agent1 = RandomAgent()
+    random_agent2 = RandomAgent()
     for _ in tqdm(range(episodes), desc="Generating data"):
-        _, episode_data = evaluate_game(agent1=random_agent, agent2=rl_agent)
+        _, episode_data = evaluate_game(agent1=random_agent1, agent2=random_agent2)
         for x in range(1, len(episode_data), 2):
             assert episode_data[x].agent_id == 1
             if x == len(episode_data) - 1:
@@ -54,8 +55,4 @@ def generate_montecarlo(rl_agent: Agent, episodes: int = 10000):
 
 
 if __name__ == "__main__":
-    agent_data = Path("../agent_data/agent_data.pickle")
-    assert agent_data.exists()
-
-    rl_agent = QLearningAgent(save_path=agent_data)
-    generate_montecarlo(rl_agent=rl_agent)
+    generate_montecarlo()

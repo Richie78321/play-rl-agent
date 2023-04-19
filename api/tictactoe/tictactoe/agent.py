@@ -71,8 +71,6 @@ class QLearningAgent(Agent):
         normalization, normalization_inverse = game_state.normalization_transform
         normalized_game_state = game_state.transform(normalization)
 
-        # https://en.wikipedia.org/wiki/Q-learning#Initial_conditions_(Q0)
-        # The default reward for an action is 1. This promotes action exploration.
         action_values = self._action_values(normalized_game_state.code)
 
         if GREEDY_SELECTION:
@@ -107,9 +105,9 @@ class QLearningAgent(Agent):
         ]
         action_values = self._value_table.get(state_code, {})
 
-        # If a possible action has no expected value, we assume it to be 1.
+        # If a possible action has no expected value, we assume it to be 0.
         return {
-            action_code: action_values.get(action_code, 1.0)
+            action_code: action_values.get(action_code, 0.0)
             for action_code in possible_action_codes
         }
 
